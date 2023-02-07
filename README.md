@@ -1,4 +1,4 @@
-# Estudos sobre JAVA PERSISTENCE API
+# 🧶 Estudos sobre JAVA PERSISTENCE API
 
 Repositório de documentação dos estudos de JPA com Hibernante
 
@@ -34,7 +34,7 @@ ORM é o conceito que trata do mapeamento objeto-relacional. Basicamente é util
 O mapeamento consiste na técnica de relacionar cada atributo á uma coluna bem como cada classe a uma tabela.
 
 Para isso, no Java com JPA utilizaremos o conceito de **Annotations**
-```
+```java
 // Exemplo:
 
 @Table(nome_tabela no banco)
@@ -43,7 +43,7 @@ public class Produto
 
 ## 2.2 - Mapeando colunas
 
-```
+```java
 // Para mapear a chave primária da tabela:
 @Id
 
@@ -70,7 +70,7 @@ Selecionar todas as libs e dar build path
 Aqui estarão configuradas as conexões com o banco de dados.
 
 Arquivo utilizado na aula:
-```
+```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <persistence version="2.1" 
     xmlns="http://xmlns.jcp.org/xml/ns/persistence"
@@ -141,7 +141,7 @@ Para mapear uma entidade para o JPA, devemos adicionar ao menos duas annotations
 - Entity - Responsável por dizer ao JPA que a classe representa uma entidade no banco de dados.
 - Id - Responsável por dizer ao JPA que o atributo é a chave primária da entidade do banco.
 
-```
+```java
   @Entity
   @Table(name = "tbusuario")
   public class Usuario {
