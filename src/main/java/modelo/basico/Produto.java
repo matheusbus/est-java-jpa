@@ -29,10 +29,11 @@ public class Produto {
 		
 	}
 
-	public Produto(String descricao, Double preco) {
+	public Produto(String descricao, Double preco, String unidMedida) {
 		super();
 		this.descricao = descricao;
 		this.preco = preco;
+		this.unidMedida = unidMedida;
 	}
 
 

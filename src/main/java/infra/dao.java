@@ -7,7 +7,7 @@ import javax.persistence.EntityManagerFactory;
 import javax.persistence.Persistence;
 import javax.persistence.TypedQuery;
 
-public class dao<E> {
+public class DAO<E> {
 
 	private static EntityManagerFactory emf;
 	private EntityManager em;
@@ -22,31 +22,31 @@ public class dao<E> {
 		}
 	}
 	
-	public dao() {
+	public DAO() {
 		
 	}
 	
-	public dao(Class<E> classe) {
+	public DAO(Class<E> classe) {
 		this.classe = classe;
 		em = emf.createEntityManager();
 	}
 	
-	public dao<E> abrirTransacao(){
+	public DAO<E> abrirTransacao(){
 		em.getTransaction().begin();
 		return this;
 	}
 	
-	public dao<E> commitTransacao(){
+	public DAO<E> commitTransacao(){
 		em.getTransaction().commit();
 		return this;
 	}
 	
-	public dao<E> incluir(E entidade){
+	public DAO<E> incluir(E entidade){
 		em.persist(entidade);
 		return this;
 	}
 	
-	public dao<E> incluirDireto(E entidade){
+	public DAO<E> incluirDireto(E entidade){
 		return this.abrirTransacao().incluir(entidade).commitTransacao();
 	}
 	
@@ -63,6 +63,15 @@ public class dao<E> {
 		query.setMaxResults(quantidade);
 		query.setFirstResult(deslocamento);
 		return query.getResultList();	
+	}
+	
+	public DAO<E> atualizar(E entidade){
+		em.merge(entidade);
+		return this;
+	}
+	
+	public DAO<E> atualizarDireto(E entidade){
+		return this.abrirTransacao().atualizar(entidade).commitTransacao();
 	}
 	
 	public void fechar() {
