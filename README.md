@@ -180,7 +180,7 @@ Para interagirmos com o banco de dados, temos duas interfaces principais do JPA 
 - EntityManagerFactory - Tem o papel de criar EntityManagers - basicamente cada entityManager vai criar uma conexão com o banco de dados encapsulada, portanto, se eu tiver que ter várias conexões com o banco de dados, vou ter que ter vários EntityManager. Detalhe: no meu arquivo persistence.xml posso ter mais de uma unit de persistência, podendo assim separar os entityManager por unit de persistência.
 - EntityManager - Classe responsável por criar uma conexão com o banco de dados e também responsável pelo CRUD = vai receber um objeto e entender que a classe daquele objeto tem um mapeamento para o banco de dados.
 
-```
+```java
 public class NovoUsuario {
 
 	public static void main(String[] args) {
@@ -195,7 +195,7 @@ No parâmetro de criação do EntityManagerFactory é passado o nome da unit de 
 
 ### 4.2.1 - (INSERT) Inserindo um registro em uma tabela
 
-```
+```java
 public class NovoUsuario {
 
 	public static void main(String[] args) {
@@ -254,7 +254,7 @@ O framework JPA trabalha com a linguagem JPQL que é uma linguagem parecida com 
 > 
 
 Segue exemplo de recuperação de dados:
-```
+```java
 public class ObterUsuarios {
 
 	public static void main(String[] args) {
@@ -310,7 +310,7 @@ Caso seja necessário ter um objeto que não assume o estado gerenciável, é po
 
 Exemplo utilizando merge:
 
-```
+```java
 	  EntityManagerFactory emf = Persistence.createEntityManagerFactory("exercicios-jpa");
 		EntityManager em = emf.createEntityManager();
 		
@@ -331,7 +331,7 @@ Exemplo utilizando merge:
 
 Exemplo considerando o contexto transacional e o estado gerenciável do objeto (não é preciso chamar o método MERGE:
 
-```
+```java
     EntityManagerFactory emf = Persistence.createEntityManagerFactory("exercicios-jpa");
 	  EntityManager em = emf.createEntityManager();
 		
@@ -352,7 +352,7 @@ Exemplo considerando o contexto transacional e o estado gerenciável do objeto (
 
 detach: Método responsável por tornar um objeto não gerenciável.
 
-```
+```java
     EntityManagerFactory emf = Persistence.createEntityManagerFactory("exercicios-jpa");
 		EntityManager em = emf.createEntityManager();
 		
@@ -368,7 +368,7 @@ detach: Método responsável por tornar um objeto não gerenciável.
 
 Porém, posso chamar o detach e o merge logo após: para casos onde não quero a sincronia imediata, onde o JPA vai esperar um momento oportuno para atualizar os valores no banco de dados.
 
-```
+```java
     EntityManagerFactory emf = Persistence.createEntityManagerFactory("exercicios-jpa");
 		EntityManager em = emf.createEntityManager();
 		
@@ -389,7 +389,7 @@ Porém, posso chamar o detach e o merge logo após: para casos onde não quero a
 
 **DEVE ESTAR EM CONTEXTO TRANSACIONAL**
 
-```
+```java
 EntityManagerFactory emf = Persistence.createEntityManagerFactory("exercicios-jpa");
 		EntityManager em = emf.createEntityManager();
 			
@@ -407,7 +407,7 @@ EntityManagerFactory emf = Persistence.createEntityManagerFactory("exercicios-jp
 
 ## 4.3 - Classe DAO com JPA
 
-```
+```java
 package infra;
 
 import java.util.List;
@@ -484,7 +484,7 @@ public class dao<E> {
 
 ProdutoDAO:
 
-```
+```java
 package infra;
 
 import modelo.basico.Produto;
@@ -499,7 +499,7 @@ public class ProdutoDAO extends DAO<Produto>{
 ```
 
 Obtendo todos os produtos com o DAO:
-```
+```java
 package teste.basico;
 
 import java.util.List;
