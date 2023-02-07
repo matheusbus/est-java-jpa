@@ -1,3 +1,534 @@
 # Estudos sobre JAVA PERSISTENCE API
 
 Repositório de documentação dos estudos de JPA com Hibernante
+
+# 1 - Padrões de Projeto
+
+---
+
+Existem dois padrões de projeto:
+
+## 1.1 - Data Mapper
+
+> Mapeamento de dados dos atributos em relação às colunas. 
+**É o padrão utilizado pelo JPA.
+As informações a serem inseridas no banco podem estar dentro de um xml, json ou annotation.**
+> 
+
+## 1.2 - Active Record
+
+> Encontrado no Laravel, Ruby on Rails.
+O próprio objeto possui seus métodos necessários para sua persistência no banco de dados. Acontece através de herança.
+Por exemplo: Cliente herda da classe ActiveRecord.
+**A classe representa a tabela e a instância representa uma linha.**
+> 
+
+# 2 - ORM - Objetc Relational Mapper
+
+---
+
+ORM é o conceito que trata do mapeamento objeto-relacional. Basicamente é utilizado para transformarmos um objeto para um registro em um banco de dados relacional.
+
+## 2.1 - Mapeando tabela
+
+O mapeamento consiste na técnica de relacionar cada atributo á uma coluna bem como cada classe a uma tabela.
+
+Para isso, no Java com JPA utilizaremos o conceito de **Annotations**
+```
+// Exemplo:
+
+@Table(nome_tabela no banco)
+public class Produto
+```
+
+## 2.2 - Mapeando colunas
+
+```
+// Para mapear a chave primária da tabela:
+@Id
+
+// Para mapear as colunas
+@Column
+```
+
+## 3.2 - Configurando JPA
+
+---
+
+Deve ser baixado o arquivo das classes do hibernate no hibernate.org.
+
+Adicionar na pasta libs do meu projeto (se não tiver, criar folder)
+
+Adicionar na pasta libs do meu projeto o SQL Connector do java
+
+Selecionar todas as libs e dar build path
+
+## 3.3 - Arquivo persistence.xml
+
+---
+
+Aqui estarão configuradas as conexões com o banco de dados.
+
+Arquivo utilizado na aula:
+```
+<?xml version="1.0" encoding="UTF-8"?>
+<persistence version="2.1" 
+    xmlns="http://xmlns.jcp.org/xml/ns/persistence"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+    xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/persistence http://xmlns.jcp.org/xml/ns/persistence/persistence_2_1.xsd">
+    <persistence-unit name="exercicios-jpa">
+        <provider>org.hibernate.jpa.HibernatePersistenceProvider</provider>
+        
+        <mapping-file>META-INF/consultas.xml</mapping-file>
+        
+        <properties>
+            <property name="javax.persistence.jdbc.driver"
+                value="com.mysql.jdbc.Driver"/>
+            <property name="javax.persistence.jdbc.url"
+                value="jdbc:mysql://localhost/curso_java"/>
+            <property name="javax.persistence.jdbc.user"
+                value="root"/>
+            <property name="javax.persistence.jdbc.password"
+                value="12345678"/>
+            
+            <property name="hibernate.dialect"
+                value="org.hibernate.dialect.MySQL57Dialect"/>
+            <property name="hibernate.show_sql" value="true"/>
+            <property name="hibernate.format_sql" value="true"/>
+            <property name="hibernate.hbm2ddl.auto" value="update"/>
+        </properties>
+    </persistence-unit>
+</persistence>
+```
+
+### 3.3.1 - Provider
+
+---
+
+Classe provedora da API. Deve estar adicionada na Lib.
+
+### 3.3.2 - Persistence unit
+
+---
+
+Unidade de persistencia que o java vai utilizar para o acesso ao banco.
+
+Podemos ter várias unidades de persistência.
+
+### 3.3.3 - Properties
+
+
+**.dialect**: as linguagens sql variam de um banco para outro, por isso é acionado esse property
+
+**.show_sql**: mostrar o sql gerado pelo hibernate no console
+
+**.format_sql**: para formatar o sql
+
+**.hbm2ddl.auto**: gerar a ddl no banco conforme é feita alterações nas classes model. Valores possíveis: none, update;
+
+---
+
+# 4 - Usando o JPA
+
+---
+
+## 4.1 - Mapeando uma entidade para o JPA
+
+---
+
+Para mapear uma entidade para o JPA, devemos adicionar ao menos duas annotations:
+
+- Entity - Responsável por dizer ao JPA que a classe representa uma entidade no banco de dados.
+- Id - Responsável por dizer ao JPA que o atributo é a chave primária da entidade do banco.
+
+```
+  @Entity
+  @Table(name = "tbusuario")
+  public class Usuario {
+
+	@Id
+	@Column(name = "usucode")
+	private Long id;
+	
+	@Column(name = "usuname", nullable = false, unique = true)
+	private String username;
+	
+	@Column(name = "usumail", nullable = false, unique = true)
+	private String email;
+	
+	@Column(name = "usupswd", nullable = false, unique = false)
+	private String password;
+	
+	public Usuario() {
+		
+	}
+	
+	public Usuario(String username, String email, String password) {
+		super();
+		this.username = username;
+		this.email = email;
+		this.password = password;
+	}
+```
+
+## 4.2 - Interagindo com o Banco de Dados com JPA
+
+---
+
+Para interagirmos com o banco de dados, temos duas interfaces principais do JPA que são necessárias:
+
+- EntityManagerFactory - Tem o papel de criar EntityManagers - basicamente cada entityManager vai criar uma conexão com o banco de dados encapsulada, portanto, se eu tiver que ter várias conexões com o banco de dados, vou ter que ter vários EntityManager. Detalhe: no meu arquivo persistence.xml posso ter mais de uma unit de persistência, podendo assim separar os entityManager por unit de persistência.
+- EntityManager - Classe responsável por criar uma conexão com o banco de dados e também responsável pelo CRUD = vai receber um objeto e entender que a classe daquele objeto tem um mapeamento para o banco de dados.
+
+```
+public class NovoUsuario {
+
+	public static void main(String[] args) {
+		
+		EntityManagerFactory emf = Persistence.createEntityManagerFactory("exercicios-jpa");
+		EntityManager em = emf.createEntityManager();
+```
+
+No parâmetro de criação do EntityManagerFactory é passado o nome da unit de persistência contida no arquivo persistence.xml.
+
+→ Pode também ser passado como parâmetro um Map com as properties de conexão com o banco.
+
+### 4.2.1 - (INSERT) Inserindo um registro em uma tabela
+
+```
+public class NovoUsuario {
+
+	public static void main(String[] args) {
+		
+		EntityManagerFactory emf = Persistence.createEntityManagerFactory("exercicios-jpa");
+		EntityManager em = emf.createEntityManager();
+		
+		Usuario novoUsuario = new Usuario("MatheusBus","m.buschermoehle@gmail.com","1234567");
+		
+		em.getTransaction().begin();
+		em.persist(novoUsuario);
+		em.getTransaction().commit();
+		
+		em.close();
+		emf.close();
+		
+		
+	}
+```
+
+### 4.2.2 - (SELECT) Obtendo um registro de uma tabela
+
+---
+
+ Observe que no método find, deve ser passado a Classe mapeada a qual se deseja consultar no banco:
+ 
+ ```
+ public class ObterUsuario {
+
+	public static void main(String[] args) {
+		
+		EntityManagerFactory emf = Persistence.createEntityManagerFactory("exercicios-jpa");
+		EntityManager em = emf.createEntityManager();
+		
+		Usuario usuario = em.find(Usuario.class, 1L);
+		
+		System.out.println(usuario.getUsername());
+		
+		String jpql = "select u from Usuario u";
+		TypedQuery<Usuario> query = em.createQuery(jpql, Usuario.class);
+		query.setMaxResults(5);
+		
+		em.close();
+		emf.close();	
+	}	
+}
+ ```
+ 
+ ### 4.2.3 - (SELECT) Obtendo vários registros de uma tabela
+
+---
+
+O framework JPA trabalha com a linguagem JPQL que é uma linguagem parecida com SQL porém no mundo dos objetos. Para realizarmos uma consulta que retorne vários registros, é necessário utilizar esse tipo de linguagem, com auxílio do framework, é claro.
+
+> JPQL = Java Persistence Query Language
+> 
+
+Segue exemplo de recuperação de dados:
+```
+public class ObterUsuarios {
+
+	public static void main(String[] args) {
+		
+		EntityManagerFactory emf = Persistence.createEntityManagerFactory("exercicios-jpa");
+		EntityManager em = emf.createEntityManager();
+		
+		/*
+		// Exemplo fazendo em várias linhas
+		String jpql = "select u from Usuario u"; // -> JQPL
+		TypedQuery<Usuario> query = em.createQuery(jpql, Usuario.class);
+		query.setMaxResults(5);
+		
+		List<Usuario> usuarios = query.getResultList();
+		*/
+		
+		// Exemplo fazendo tudo em uma linha
+		List<Usuario> usuarios = em
+				.createQuery("select u from Usuario u", Usuario.class)
+				.setMaxResults(5)
+				.getResultList();
+		
+		
+		for(Usuario usuario : usuarios) {
+			System.out.println("Id: "+usuario.getId()+" - Username: "+usuario.getUsername());
+		}
+		
+		em.close();
+		emf.close();
+		
+	}
+```
+
+### 4.2.4 - (UPDATE) Alterando um registro de uma tabela
+
+---
+
+Para gerar um update com o JPA temos que considerar a existência do **Estado Gerenciável do Objeto**
+
+<aside>
+💡 Estado gerenciável de um objeto: qualquer mudança que ser feita em um objeto em um contexto transacional, será “sincronizado” pelo JPA no banco de dados.
+
+</aside>
+
+> Se um objeto estiver configurado para estado gerenciável, não precisamos chamar nenhum método para atualizá-lo no banco de dados pois o JPA fará isso para gente.
+Caso seja necessário ter um objeto que não assume o estado gerenciável, é possível configurar.
+> 
+
+<aside>
+🏆 **O mais recomendado é termos objetos que não assumem estados gerenciáveis e são atualizados somente em contexto transacional com a chamada do método merge.**
+
+</aside>
+
+Exemplo utilizando merge:
+
+```
+	  EntityManagerFactory emf = Persistence.createEntityManagerFactory("exercicios-jpa");
+		EntityManager em = emf.createEntityManager();
+		
+		
+		Usuario usuario = em.find(Usuario.class, 1L);
+		System.out.println(usuario);
+		usuario.setUsername("Matheus Alterado");
+		
+		em.getTransaction().begin();
+		
+		em.merge(usuario);
+		
+		em.getTransaction().commit();
+		
+		em.close();
+		emf.close();
+```
+
+Exemplo considerando o contexto transacional e o estado gerenciável do objeto (não é preciso chamar o método MERGE:
+
+```
+    EntityManagerFactory emf = Persistence.createEntityManagerFactory("exercicios-jpa");
+	  EntityManager em = emf.createEntityManager();
+		
+		
+		Usuario usuario = em.find(Usuario.class, 1L);
+		System.out.println(usuario);
+		usuario.setUsername("Matheus Arruda");
+		
+		em.getTransaction().begin();
+		
+		//em.merge(usuario); Altera mesmo sem chamar o método merge
+		
+		em.getTransaction().commit();
+		
+		em.close();
+		emf.close();
+```
+
+detach: Método responsável por tornar um objeto não gerenciável.
+
+```
+    EntityManagerFactory emf = Persistence.createEntityManagerFactory("exercicios-jpa");
+		EntityManager em = emf.createEntityManager();
+		
+		em.getTransaction().begin();
+		
+		Usuario usuario = em.find(Usuario.class, 1L);
+		usuario.setUsername("João gomes");
+		em.detach(usuario); // Não irá mais atualizar automaticamente no banco de dados.
+		
+		
+		em.getTransaction().commit();
+```
+
+Porém, posso chamar o detach e o merge logo após: para casos onde não quero a sincronia imediata, onde o JPA vai esperar um momento oportuno para atualizar os valores no banco de dados.
+
+```
+    EntityManagerFactory emf = Persistence.createEntityManagerFactory("exercicios-jpa");
+		EntityManager em = emf.createEntityManager();
+		
+		em.getTransaction().begin();
+		
+		Usuario usuario = em.find(Usuario.class, 1L);
+		usuario.setUsername("João gomes");
+		em.detach(usuario);
+		em.merge(usuario);
+		em.getTransaction().commit();
+```
+
+### 4.2.5 - (DELETE) Removendo dados do banco de dados
+
+---
+
+- remove: método utilizado para remover um registro do banco de dados.
+
+**DEVE ESTAR EM CONTEXTO TRANSACIONAL**
+
+```
+EntityManagerFactory emf = Persistence.createEntityManagerFactory("exercicios-jpa");
+		EntityManager em = emf.createEntityManager();
+			
+		Usuario usuario = em.find(Usuario.class, 1L);
+		
+		if(usuario != null) {
+			em.getTransaction().begin();
+			em.remove(usuario);
+			em.getTransaction().commit();
+		}
+		
+		em.close();
+		emf.close();
+```
+
+## 4.3 - Classe DAO com JPA
+
+```
+package infra;
+
+import java.util.List;
+
+import javax.persistence.EntityManager;
+import javax.persistence.EntityManagerFactory;
+import javax.persistence.Persistence;
+import javax.persistence.TypedQuery;
+
+public class dao<E> {
+
+	private static EntityManagerFactory emf;
+	private EntityManager em;
+	private Class<E> classe;
+	
+	static {
+		try {
+			emf = Persistence.createEntityManagerFactory("exercicios-jpa");
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public dao() {
+		
+	}
+	
+	public dao(Class<E> classe) {
+		this.classe = classe;
+		em = emf.createEntityManager();
+	}
+	
+	public dao<E> abrirTransacao(){
+		em.getTransaction().begin();
+		return this;
+	}
+	
+	public dao<E> commitTransacao(){
+		em.getTransaction().commit();
+		return this;
+	}
+	
+	public dao<E> incluir(E entidade){
+		em.persist(entidade);
+		return this;
+	}
+	
+	public dao<E> incluirDireto(E entidade){
+		return this.abrirTransacao().incluir(entidade).commitTransacao();
+	}
+	
+	public List<E> obterTodos(){
+		return this.obterTodos(10,0);
+	}
+	
+	public List<E> obterTodos(int quantidade, int deslocamento){
+		if(classe == null) {
+			throw new UnsupportedOperationException("Classe nula");
+		}
+		String jpql = "select e from "+classe.getName() + " e";
+		TypedQuery<E> query = em.createQuery(jpql, classe);
+		query.setMaxResults(quantidade);
+		query.setFirstResult(deslocamento);
+		return query.getResultList();	
+	}
+	
+	public void fechar() {
+		em.close();
+	}
+	
+}
+```
+
+ProdutoDAO:
+
+```
+package infra;
+
+import modelo.basico.Produto;
+
+public class ProdutoDAO extends DAO<Produto>{
+
+	public ProdutoDAO() {
+		super(Produto.class);
+	}
+	
+}
+```
+
+Obtendo todos os produtos com o DAO:
+```
+package teste.basico;
+
+import java.util.List;
+
+import infra.ProdutoDAO;
+import modelo.basico.Produto;
+
+public class ObterProdutos {
+
+	public static void main(String[] args) {
+		
+		ProdutoDAO dao = new ProdutoDAO();
+		List<Produto> produtos = dao.obterTodos();
+		
+		for(Produto produto : produtos) {
+			System.out.println(produto.toString());
+		}
+		
+		double valorTotalEmEstoque = produtos
+				.stream()
+				.map(p -> p.getPreco())
+				.reduce(0.0, (t, p) -> t + p)
+				.doubleValue();
+		System.out.println("O valor do estoque total é R$" +valorTotalEmEstoque);
+		
+		dao.fechar();
+	}	
+	
+}
+```
+
+# 5 - Relacionamentos com JPA
