@@ -222,7 +222,7 @@ public class NovoUsuario {
 
  Observe que no método find, deve ser passado a Classe mapeada a qual se deseja consultar no banco:
  
- ```
+ ```java
  public class ObterUsuario {
 
 	public static void main(String[] args) {
@@ -532,3 +532,137 @@ public class ObterProdutos {
 ```
 
 # 5 - Relacionamentos com JPA
+
+---
+
+Assim como tenho os relacionamentos em um banco de dados (Entidade/Relacionamento), temos os relacionamento no mundo da Orientação à Objetos.
+
+→ Na orientação à objetos o relacionamento ocorre por meio de atributos da minha classe referenciando outras classes.
+
+## 5.1 - Annotattions de relacionamento no JPA
+```java
+@OneToOne
+Object atritubo;
+
+@OneToMany - @ManyToOne
+List<Object> atributo2;
+
+@ManyToMany
+List<Object> atributo3;
+```
+---
+## 5.2 - Relacionamento Um para Um com JPA
+
+---
+
+Para mim representar o relacionamento um para um, considerei duas classe:
+
+- Cliente
+- Assento
+
+No contexto de que um cliente possui um assento e esse assento deve ser único (apontar apenas para um cliente).
+
+Classe cliente:
+```java
+@Entity
+@Table(name = "tb_cliente")
+public class Cliente {
+
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	private Long id;
+	
+	@Column(name = "nome")
+	private String nome;
+	
+	@OneToOne
+	@JoinColumn(name = "assento_id", unique = true) // Não posso usar o @Column
+	private Assento assento;
+	
+	public Cliente() {
+		
+	}
+
+	public Cliente(String nome, Assento assento) {
+		super();
+		this.nome = nome;
+		this.assento = assento;
+	}
+
+// métodos getters and setters...	
+	
+}
+```
+Reparar que, para a coluna que referencia o assento eu tenho um objeto assento. E para o mesmo, é adicionado as annotations:
+
+- **OneToOne**: responsável por dizer ao JPA que aquele atributo faz referência à um relacionamento um para um.
+- **JoinColumn**: para ser possível adicionar a propriedade unique no atributo de assento.
+
+Já a classe Assento, sem muitos segredos:
+```java
+@Entity
+@Table(name = "tb_assento")
+public class Assento {
+
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	private Long id;
+	
+	@Column(name = "nome")
+	private String nome;
+	
+	public Assento() {
+		
+	}
+
+  public Assento(String nome) {
+		super();
+		this.nome = nome;
+	}
+```
+Manipulando os objetos e inserindo:
+
+> Reparar que eu posso inserir mais de um objeto em uma única transação. E estes devem seguir uma ordem lógica de inclusão. 
+> No caso, o assento deve ser inserido antes da inserção do cliente, pois o assento deve existir para que seja referenciado.
+
+```java
+Manipulando os objetos e inserindo:
+
+> Reparar que eu posso inserir mais de um objeto em uma única transação. E estes devem seguir uma ordem lógica de inclusão. No caso, o assento deve ser inserido antes da inserção do cliente, pois o assento deve existir para que seja referenciado.
+>
+```
+> Importante ressaltar que **************************************************EM CONTEXTO TRANSACIONAL************************************************** não é estritamente necessário a inserção em ordem lógica como segue o banco de dados, o JPA ao perceber que há uma relação entre as entidades fará a manipulação e inserção correta. Porém, isso se dá apenas em contexto transacional.
+
+## 5.3 - Operações em Cascata com JPA
+
+---
+
+Podemos declarar um atributo de uma classe, que referencia outra classe como um atributo que será manipulado no banco de dados toda vez que a classe ao qual ele está inserido for manipulada.
+
+Por exemplo:
+
+→ Eu quero inserir um objeto Cliente com um objeto Assento que não existe no banco de dados, então posso realizar com JPA a operação em **CASCATA.**
+
+- OneToOne( cascade = {CasdcadeType.PERSIST, CascadeType.MERGE}) → Para persistir e atualizar em cascata;
+- OneToOne( cascade = CascadeType.ALL ) → Para realizar todas as operações em cascata.
+
+```java
+@Entity
+@Table(name = "tb_cliente")
+public class Cliente {
+
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	private Long id;
+	
+	@Column(name = "nome")
+	private String nome;
+	
+	@OneToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+	@JoinColumn(name = "assento_id", unique = true)
+	private Assento assento;
+	
+	public Cliente() {
+		
+	}
+```
