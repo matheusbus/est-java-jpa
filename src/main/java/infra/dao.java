@@ -23,7 +23,7 @@ public class DAO<E> {
 	}
 	
 	public DAO() {
-		
+		em = emf.createEntityManager();		
 	}
 	
 	public DAO(Class<E> classe) {
