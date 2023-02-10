@@ -1,16 +1,18 @@
 package modelo.umparamuitos;
 
 import java.util.Date;
+import java.util.List;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
 @Entity
-@Table(name = "tbproduto")
+@Table(name = "tbpedido")
 public class Pedido {
 
 	@Id
@@ -20,10 +22,27 @@ public class Pedido {
 	@Column(name = "data_pedido", nullable = false)
 	private Date data;
 
+	@OneToMany(mappedBy = "pedido")
+	private List<ItemPedido> itens;
+	
 	public Pedido() {
-		this.data = new Date();
+		this(new Date());
 	}
 	
+	public Pedido(Date data) {
+		super();
+		this.data = data;
+	}
+	
+	
+	public List<ItemPedido> getItens() {
+		return itens;
+	}
+
+	public void setItens(List<ItemPedido> itens) {
+		this.itens = itens;
+	}
+
 	public Long getId() {
 		return id;
 	}

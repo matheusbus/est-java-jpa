@@ -1,5 +1,6 @@
 package modelo.umparamuitos;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -10,7 +11,7 @@ import javax.persistence.Table;
 import modelo.basico.Produto;
 
 @Entity
-@Table(name = "tbitem_pedido")
+@Table(name = "tbitempedido")
 public class ItemPedido {
 
 	@Id
@@ -23,8 +24,10 @@ public class ItemPedido {
 	@ManyToOne
 	private Produto produto;
 	
+	@Column(nullable = false)
 	private int quantidade;
 	
+	@Column(nullable = false)
 	private Double preco;
 
 	public ItemPedido() {
