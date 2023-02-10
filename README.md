@@ -666,3 +666,105 @@ public class Cliente {
 		
 	}
 ```
+## 5.4 - Relacionamento um para um (Bidirecional)
+
+---
+
+Quanto tivermos duas classas Java que possuem relacionamento no qual cada uma das classes possui um atributo do tipo da outra classe, temos um relacionamento bidirecional no java, porém no banco de dados isso não irá ocorrer, portanto, em um dos atributos tenho que informar a cláusula:
+
+- @OneToOne(MappedBy = ‘nomeAtributoMapeado’)
+
+Informando que o relacionamento bidirecional já foi mapeado em outro atributo.
+
+Exemplo:
+
+Na classe Cliente, temos o atributo assento normalmente:
+´´´java
+@Entity
+@Table(name = "tb_cliente")
+public class Cliente {
+
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	private Long id;
+	
+	@Column(name = "nome")
+	private String nome;
+	
+	@OneToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+	@JoinColumn(name = "assento_id", unique = true)
+	private Assento assento;
+	
+	public Cliente() {
+		
+	}
+´´´
+Já na classe assento, teremos o atributo Cliente da seguinte forma:
+´´´java
+@Entity
+@Table(name = "tb_assento")
+public class Assento {
+
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	private Long id;
+	
+	@Column(name = "nome")
+	private String nome;
+	
+	@OneToOne(mappedBy = "assento") // O nome deve ser o nome exato do atributo mapeado na classe Cliente.
+	private Cliente cliente;
+´´´
+> Atenção: se não declarar o mappedBy, o JPA irá criar uma nova coluna na tabela da classe em questão.
+> 
+
+## 5.5 - Relacionamento Um para Muitos (Unidirecional)
+
+---
+
+@ManyToOne
+´´´java
+@Entity
+@Table(name = "tbitempedido")
+public class ItemPedido {
+
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	private Long id;
+	
+	@ManyToOne
+	private Pedido pedido;
+	
+	@ManyToOne
+	private Produto produto;
+	
+	@Column(nullable = false)
+	private int quantidade;
+	
+	@Column(nullable = false)
+	private Double preco;
+
+	public ItemPedido() {
+		
+	}
+´´´
+No exemplo, utilizo a classe ItemPedido, que poderá ter várias instâncias para um pedido.
+
+Neste caso, a annotation quer dizer que há muitos (itempedido) para um (pedido).
+´´´java
+@Entity
+@Table(name = "tbpedido")
+public class Pedido {
+
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	private Long id;
+	
+	@Column(name = "data_pedido", nullable = false)
+	private Date data;
+
+	public Pedido() {
+		this(new Date());
+	}
+´´´
+Note que até o momento tenho apenas o relacionamento de um lado. Mas, e se eu quiser saber todos os itempedido de um pedido? Então tenho que adicionar a annotation @OneToMany na classe Pedido.
