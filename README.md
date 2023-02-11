@@ -723,10 +723,11 @@ public class Assento {
 ---
 
 @ManyToOne
-´´´java
-@Entity
-@Table(name = "tbitempedido")
-public class ItemPedido {
+
+	´´´java
+	@Entity
+	@Table(name = "tbitempedido")
+	public class ItemPedido {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -751,10 +752,14 @@ public class ItemPedido {
 No exemplo, utilizo a classe ItemPedido, que poderá ter várias instâncias para um pedido.
 
 Neste caso, a annotation quer dizer que há muitos (itempedido) para um (pedido).
-´´´java
-@Entity
-@Table(name = "tbpedido")
-public class Pedido {
+
+´´´
+
+
+	´´´java
+	@Entity
+	@Table(name = "tbpedido")
+	public class Pedido {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -766,5 +771,159 @@ public class Pedido {
 	public Pedido() {
 		this(new Date());
 	}
-´´´
+	´´´
+	
 Note que até o momento tenho apenas o relacionamento de um lado. Mas, e se eu quiser saber todos os itempedido de um pedido? Então tenho que adicionar a annotation @OneToMany na classe Pedido.
+
+## 5.5 - Relacionamento Um para Muitos (bidirecional)
+
+---
+
+Agora, adicionando a bidirecionalidade, o atributo na classe Pedido:
+
+Adiciono a Annotation 
+
+- @OneToMany → Observar que One (Pedido) para Many (itensPedido)
+
+Adiciono também (mappedBy = “pedido”), pois o atributo já foi mapeado na classe ItemPedido.
+
+	´´´java
+	@Entity
+	@Table(name = "tbpedido")
+	public class Pedido {
+
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	private Long id;
+
+	@Column(name = "data_pedido", nullable = false)
+	private Date data;
+
+	@OneToMany(mappedBy = "pedido")
+	private List<ItemPedido> itens;
+
+	public Pedido() {
+		this(new Date());
+	}
+
+	public Pedido(Date data) {
+		super();
+		this.data = data;
+	}
+	´´´
+	
+Obtendo todos os itens de um pedido:
+
+> Quando chamamos o getItens o JPA executa uma segunda consulta na tabela de itens para retornar todos os itens pertencentes ao produto.
+
+	´´´java
+		public static void main(String[] args) {
+		
+		
+		DAO<Pedido> dao = new DAO<>(Pedido.class);
+		
+		Pedido pedido = dao.obterPorId(1L);
+		
+		for(ItemPedido item : pedido.getItens()) {
+			System.out.println(item.toString());
+		}
+		
+		dao.fechar();
+		
+	}
+	´´´
+	
+## 5.6 - Relacionamento Um para Muitos (utilizando fetch)
+
+---
+
+Quanto há relacionamentos e anoto os atributos com OneToMany ou ManyToOne, há uma propriedade chamada Fetch. Ela serve para dizer ao JPA o tipo de consulta que irá ser feita levando em consideração o relacionamento. Há duas marcações:
+
+fetch = *FetchType*.***EAGER***
+
+fetch = *FetchType*.***LAZY***
+
+O ******************EAGER****************** é um marcador para dizer ao JPA que ao trazer o registro do objeto em questão, todos os registros do atributo ao qual o relacionamento está anotado com o fecth serão trazidos na mesma consulta (Eager = ansioso), de modo apressado, ao mesmo tempo.
+
+Já o **LAZY** é um marcador para dizer ao JPA que os registros do relacionamento não serão trazidos na mesma consulta ao objeto em questão (Lazy = preguiçoco).
+
+→ Padrões: quando não informado o JPA assume alguns padrões, são eles:
+
+Para relacionamentos que apontam para muitos (…ToMany) o padrão será o Lazy e o JPA não trará todos os registros do relacionamento na mesma consulta.
+
+Para relacionamento que apontam para um (…ToOne) o padrão será o Eager e o JPA trará todos os registros do relacionamento na mesma consulta.
+
+Esse controle é muito importante quando temos relacionamentos em cadeia, por exemplo uma tabela que faz relacionamento para muitos em outra tabela, e essa por sua vez faz relacionamento para muitos em outra tabela.
+
+<aside>
+🏆 Recomendado: deixar no padrão e quando necessário criar uma consulta específica utilizando JPQL.
+
+</aside>
+
+Portanto, um exemplo utilizando o ***LAZY:*** (Observar que o JPA faz duas consultas ao banco de dados)
+
+	´´´
+	Hibernate: 
+	    select
+		pedido0_.id as id1_3_0_,
+		pedido0_.data_pedido as data_ped2_3_0_ 
+	    from
+		tbpedido pedido0_ 
+	    where
+		pedido0_.id=?
+	Hibernate: 
+	    select
+		itens0_.pedido_id as pedido_i4_2_0_,
+		itens0_.id as id1_2_0_,
+		itens0_.id as id1_2_1_,
+		itens0_.pedido_id as pedido_i4_2_1_,
+		itens0_.preco as preco2_2_1_,
+		itens0_.produto_id as produto_5_2_1_,
+		itens0_.quantidade as quantida3_2_1_,
+		produto1_.id as id1_4_2_,
+		produto1_.pddescri as pddescri2_4_2_,
+		produto1_.pdpreco as pdpreco3_4_2_,
+		produto1_.pdunidmed as pdunidme4_4_2_ 
+	    from
+		tbitempedido itens0_ 
+	    left outer join
+		tbproduto produto1_ 
+		    on itens0_.produto_id=produto1_.id 
+	    where
+		itens0_.pedido_id=?
+	´´´
+
+Já se utilizarmos o ***EAGER:*** (Observar que o JPA faz apenas uma consulta ao banco de dados)
+
+	´´´
+	Hibernate: 
+	    select
+		pedido0_.id as id1_3_0_,
+		pedido0_.data_pedido as data_ped2_3_0_,
+		itens1_.pedido_id as pedido_i4_2_1_,
+		itens1_.id as id1_2_1_,
+		itens1_.id as id1_2_2_,
+		itens1_.pedido_id as pedido_i4_2_2_,
+		itens1_.preco as preco2_2_2_,
+		itens1_.produto_id as produto_5_2_2_,
+		itens1_.quantidade as quantida3_2_2_,
+		produto2_.id as id1_4_3_,
+		produto2_.pddescri as pddescri2_4_3_,
+		produto2_.pdpreco as pdpreco3_4_3_,
+		produto2_.pdunidmed as pdunidme4_4_3_ 
+	    from
+		tbpedido pedido0_ 
+	    left outer join
+		tbitempedido itens1_ 
+		    on pedido0_.id=itens1_.pedido_id 
+	    left outer join
+		tbproduto produto2_ 
+		    on itens1_.produto_id=produto2_.id 
+	    where
+		pedido0_.id=?
+	´´´
+Dica: se na minha aplicação eu tiver um caso em que na maior parte das vezes em que eu acesso um registro pai, eu preciso acessar os registros filhos, então faz mais sentido trazer tudo em uma query só → Utilizando assim o EAGER.
+
+## 5.6 - Relacionamentos Muitos para Muitos
+
+---
