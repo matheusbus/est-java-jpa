@@ -2,6 +2,7 @@ package modelo.umparamuitos;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -18,10 +19,10 @@ public class ItemPedido {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 	
-	@ManyToOne
+	@ManyToOne(fetch = FetchType.EAGER)
 	private Pedido pedido;
 	
-	@ManyToOne
+	@ManyToOne(fetch = FetchType.EAGER)
 	private Produto produto;
 	
 	@Column(nullable = false)
@@ -87,8 +88,12 @@ public class ItemPedido {
 
 	@Override
 	public String toString() {
-		return "ItemPedido [id=" + id + ", pedido=" + pedido + ", produto=" + produto + ", quantidade=" + quantidade
-				+ ", preco=" + preco + "]";
+		return new StringBuilder()
+				.append("Pedido: "+getPedido().getId()+"\n")
+				.append("Produto: "+getProduto().getId()+" - "+getProduto().getDescricao()+"\n")
+				.append("Quantidade: "+getQuantidade()+"\n")
+				.append("Preço: R$"+getPreco()+"\n")
+				.toString();
 	}
 	
 }

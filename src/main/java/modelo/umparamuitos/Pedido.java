@@ -5,6 +5,7 @@ import java.util.List;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -22,7 +23,7 @@ public class Pedido {
 	@Column(name = "data_pedido", nullable = false)
 	private Date data;
 
-	@OneToMany(mappedBy = "pedido")
+	@OneToMany(mappedBy = "pedido", fetch = FetchType.EAGER)
 	private List<ItemPedido> itens;
 	
 	public Pedido() {
