@@ -3,6 +3,7 @@ package teste.consulta;
 import java.util.List;
 
 import infra.DAO;
+import modelo.muitosparamuitos.Ator;
 import modelo.muitosparamuitos.Filme;
 
 public class ObterFilmes {
@@ -15,6 +16,10 @@ public class ObterFilmes {
 		
 		for(Filme filme : filmes) {
 			System.out.println(filme.getNome());
+			
+			for(Ator ator : filme.getAtores()) {
+				System.out.println(ator.getNome());
+			}
 		}
 		
 		
