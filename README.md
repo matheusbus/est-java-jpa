@@ -927,3 +927,174 @@ Dica: se na minha aplicação eu tiver um caso em que na maior parte das vezes e
 ## 5.6 - Relacionamentos Muitos para Muitos
 
 ---
+Para os relacionamentos muitos para muitos utilizamos a annotation:
+
+- @ManyToMany
+
+A única questão que deve ser levantada aqui é que dependendo da classe em que a relação for mapeada, que se dará o nome da tabela (em casos em que o JPA possui permissão para alterar o banco de dados).
+
+No exemplo abaixo, foi feito uma estrutura de Tios e Sobrinhos. Um sobrinho possui vários tios e um Tio possui vários sobrinhos.
+
+O atributo mapeado foi na classe de Tio:
+
+```java
+@Entity
+public class Tio {
+
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	private Long id;
+	
+	@Column(name = "nome", nullable = false)
+	private String nome;
+	
+	@ManyToMany
+	private List<Sobrinho> sobrinhos = new ArrayList<>();
+	
+	public Tio() {
+		
+	}
+
+	public Tio(String nome) {
+		super();
+		this.nome = nome;
+	}
+```
+Já na classe Sobrinho, marco com o MappedBy:
+
+```java
+@Entity
+public class Sobrinho {
+
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	private Long id;
+	
+	@Column(name = "nome", nullable = false)
+	private String nome;
+	
+	@ManyToMany(mappedBy = "sobrinhos") // Isso quer dizer que na classe de Tio é que está mapeada a relação.
+	private List<Tio> tios = new ArrayList<>();
+	
+	public Sobrinho() {
+		
+	}
+
+	public Sobrinho(String nome) {
+		super();
+		this.nome = nome;
+	}
+```
+Portanto, ao criar a tabela no banco de dados, o JPA assumirá o nome de “tio_sobrinho” (claro que dá para alterar e personalizar o nome a ser criado).
+
+Inserindo as relações no banco de dados:
+
+```java
+public class NovoTioSobrinho {
+
+	public static void main(String[] args) {
+		
+		Tio tio = new Tio("Vitor");
+		Tio tia = new Tio("Joana");
+		
+		Sobrinho sobrinho = new Sobrinho("Matheus");
+		Sobrinho sobrinha = new Sobrinho("Franciele");
+		
+		// Relacionando todos com todos.
+		tio.getSobrinhos().add(sobrinho);
+		tio.getSobrinhos().add(sobrinha);
+		
+		tia.getSobrinhos().add(sobrinho);
+		tia.getSobrinhos().add(sobrinha);
+		
+		sobrinho.getTios().add(tio);
+		sobrinho.getTios().add(tia);
+		
+		sobrinha.getTios().add(tio);
+		sobrinha.getTios().add(tia);
+		
+		DAO<Object> dao = new DAO<>();
+		
+		dao.abrirTransacao()
+			.incluir(tio)
+			.incluir(tia)
+			.incluir(sobrinho)
+			.incluir(sobrinha)
+			.commitTransacao()
+			.fechar();
+		
+	}
+	
+}
+```
+E no fim, fica assim o banco de dados, com a tabela de relacionamento de muitos para muitos:
+![Untitled](https://user-images.githubusercontent.com/73143728/218625441-aa421f92-323a-4ee7-afaa-0569922a2a98.png)
+
+---
+
+### 5.6.1 - Posso ter controle total sobre a tabela a ser criada pelo JPA para representar a relação:
+
+Neste caso, utilizo a propriedade @JoinTable:
+
+```java
+@Entity
+@Table(name = "tbfilme")
+public class Filme {
+
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	private Long id;
+	
+	@Column(name = "fil_nome", nullable = false)
+	private String nome;
+	
+	@ManyToMany
+	@JoinTable(
+		name = "tbatores_filmes",
+		joinColumns = @JoinColumn(name = "filme_id", referencedColumnName = "id"),
+		inverseJoinColumns = @JoinColumn(name = "ator_id", referencedColumnName = "id")
+	)
+	private List<Ator> atores;
+	
+	@Column(name = "fil_nota")
+	private double nota;
+
+	public Filme() {
+		super();
+	}
+```
+Onde:
+
+- **name**: nome da minha tabela que fará o relacionamento.
+- **joinColumns**: colunas que farão fk para a minha classe atual (que contém o atributo)
+- **inverseJoinColumns**: colunas que farão fk para a outra classe mapeada (que contém o mappedBy)
+- @JoinColumn: para declarar o campo
+- name: nome do campo na tabela a ser criada
+- referencedColumnName: nome do campo na tabela que fará fk (no caso, filme e ator)
+
+```java
+public class NovoFilmeAtor {
+
+	public static void main(String[] args) {
+		
+		Filme filmeA = new Filme("As cronicas de Nárnia", 9.9);
+		Filme filmeB = new Filme("007", 7.5);
+		
+		
+		Ator atorA = new Ator("Vin Diesel");
+		Ator atorB = new Ator("Angelina Julie");
+		
+		filmeA.adicionarAtor(atorA);
+		filmeA.adicionarAtor(atorB);
+		
+		filmeB.adicionarAtor(atorB);
+		
+		DAO<Filme> dao = new DAO<>();
+		dao.incluirDireto(filmeA);
+		// Aqui o JPA vai persistir todos os objetos no banco de dados, devido ao Cascade
+		// na classe Filme e na classe Ator.
+		
+	}
+	
+}
+```
