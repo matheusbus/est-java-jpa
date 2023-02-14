@@ -77,6 +77,16 @@ public class DAO<E> {
 	public DAO<E> atualizarDireto(E entidade){
 		return this.abrirTransacao().atualizar(entidade).commitTransacao();
 	}
+
+	public List<E> consultar(String nomeDaConsulta, Object... params){
+		TypedQuery<E> query = em.createNamedQuery(nomeDaConsulta, classe);
+		
+		for(int i = 0; i < params.length; i += 2) {
+			query.setParameter(params[i].toString(), params[i + 1]);
+		}
+		
+		return query.getResultList();
+	}
 	
 	public void fechar() {
 		em.close();
