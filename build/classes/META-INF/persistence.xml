@@ -12,6 +12,10 @@
 		<class>modelo.umpraum.Cliente</class>
 		<class>modelo.umparamuitos.Pedido</class>
 		<class>modelo.umparamuitos.ItemPedido</class>
+		<class>modelo.muitosparamuitos.Sobrinho</class>
+		<class>modelo.muitosparamuitos.Tio</class>
+		<class>modelo.muitosparamuitos.Filme</class>
+		<class>modelo.muitosparamuitos.Ator</class>
 		
 		        
         <properties>
