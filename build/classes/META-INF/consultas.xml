@@ -8,7 +8,15 @@
 			select distinct f 
 			  from Filme f
 			  join fetch f.atores
-			 where f.nota >= :nota
+			 where f.nota > :nota
+		</query>
+	</named-query>
+	<named-query name="obterFilmesComNotaIgual">
+		<query>
+			select distinct f
+			  from Filme f
+			  join fetch f.atores
+			 where f.nota = :nota
 		</query>
 	</named-query>				
 </entity-mappings>
