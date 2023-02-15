@@ -1098,3 +1098,191 @@ public class NovoFilmeAtor {
 	
 }
 ```
+
+# 6 - Named Query
+
+---
+
+Consultas nomeadas.
+
+Em JPA posso ter consultas prontas utilizando Annotation como @NamedQuery.
+
+Exemplo na classe:
+```java
+@Entity
+@NamedQuery(name = "ObterFilmesComNotaMenorQue", query = "select f from Filme f where f.nota < :nota")
+@Table(name = "tbfilme")
+public class Filme {
+
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	private Long id;
+	
+	@Column(name = "fil_nome", nullable = false)
+	private String nome;
+	
+	@ManyToMany(cascade = CascadeType.PERSIST) // No momento de inserção de um filme, irá inserir também os atores.
+	@JoinTable(
+		name = "tbatores_filmes",
+		joinColumns = @JoinColumn(name = "filme_id", referencedColumnName = "id"),
+		inverseJoinColumns = @JoinColumn(name = "ator_id", referencedColumnName = "id")
+	)
+	private List<Ator> atores;
+	
+	@Column(name = "fil_nota")
+	private double nota;
+
+	public Filme() {
+		super();
+	}
+```
+
+É possível ter também, um arquivo xml com várias namedQueries:
+
+<aside>
+💡 Criar no META-INF um arquivo do tipo JPA ORM Mapping File
+
+</aside>
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<entity-mappings version="2.2" xmlns="http://xmlns.jcp.org/xml/ns/persistence/orm" 
+				xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+				xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/persistence/orm http://xmlns.jcp.org/xml/ns/persistence/orm_2_2.xsd">
+				
+	<named-query name="obterFilmesComNotaMaiorQue">
+		<query>
+			select distinct f 
+			  from Filme f
+			  join fetch f.atores
+			 where f.nota > :nota
+		</query>
+	</named-query>
+	<named-query name="obterFilmesComNotaIgual">
+		<query>
+			select distinct f
+			  from Filme f
+			  join fetch f.atores
+			 where f.nota = :nota
+		</query>
+	</named-query>				
+</entity-mappings>
+```
+Para utilizar a consulta, criei um método na classe DAO:
+
+```java
+	public List<E> consultar(String nomeDaConsulta, Object... params){
+			TypedQuery<E> query = em.createNamedQuery(nomeDaConsulta, classe);
+
+			for(int i = 0; i < params.length; i += 2) {
+				query.setParameter(params[i].toString(), params[i + 1]);
+			}
+
+			return query.getResultList();
+		}
+
+```
+
+Utilizando um array de Object recebendo um tipo de “chave e valor”, onde a chave vai ser a coluna do filtro e o valor será o valor a ser filtrado.
+
+Utilizando o método:
+
+```java
+public class ObterFilmes {
+
+	public static void main(String[] args) {
+		
+		DAO<Filme> dao = new DAO<>(Filme.class);
+
+		// List<Filme> filmes = dao.consultar("obterFilmesComNotaMaiorQue", "nota", 8.5);
+		//List<Filme> filmes = dao.consultar("obterFilmesComNotaIgual", "nota", 7.5);
+		
+		List<Filme> filmes = dao.consultar("ObterFilmesComNotaMenorQue", "nota", 10D);
+		
+		for(Filme filme : filmes) {
+			System.out.println(filme.getNome());
+			
+			for(Ator ator : filme.getAtores()) {
+				System.out.println(ator.getNome());
+			}
+		}
+	}
+}
+```
+
+# 7 - Named Native Query
+
+---
+
+Geralmente, em nossos programas é necessários que façamos consultas nativas e específicas e que provavelmente teremos de colocar em uma classe que não seja uma entidade, por exemplo um relatório.
+
+As consultas nativas podem ser escritas em SQL e não JPQL.
+
+Primeiro, deve ser criada uma classe modelo que irá receber o retorno da consulta:
+
+```java
+package modelo.consulta;
+
+// Exemplo da aula de named native query - jpa
+
+public class NotaFilme {
+
+	private double media;
+	
+	public NotaFilme(double media) {
+		super();
+		this.media = media;
+	}
+
+	public double getMedia() {
+		return media;
+	}
+
+	public void setMedia(double media) {
+		this.media = media;
+	}
+	
+}
+```
+
+Em seguida, adiciono os seguintes atributos no arquivo **consultas.xml:**
+
+```xml
+<named-native-query name="obterMediaGeralDosFilmes" 
+						result-set-mapping="NotaFilmeMap">
+		<query>
+			select avg(fil_nota) as media from tbfilme
+		</query>
+	</named-native-query>
+	
+	<sql-result-set-mapping name="NotaFilmeMap">
+		<constructor-result target-class="modelo.consulta.NotaFilme">
+			<column name="media" class="java.lang.Double"/>
+		</constructor-result>
+	</sql-result-set-mapping>
+```
+
+Criando um novo método no DAO para Consultar apenas um:
+
+```java
+public E consultarUm(String nomeDaConsulta, Object... params) {
+		List<E> lista = consultar(nomeDaConsulta, params);
+		return lista.isEmpty() ? null : lista.get(0);
+	}
+```
+
+Consultando e imprimindo a média:
+
+```java
+public class ObterMediaFilmes {
+
+	public static void main(String[] args) {
+		
+		DAO<NotaFilme> dao = new DAO<>(NotaFilme.class);
+		NotaFilme nota = dao.consultarUm("obterMediaGeralDosFilmes");
+		System.out.println("Média dos filmes utilizando named-native-query: " + nota.getMedia());
+		dao.fechar();
+	}
+	
+}
+```
