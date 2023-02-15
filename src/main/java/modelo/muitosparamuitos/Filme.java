@@ -12,9 +12,11 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
+import javax.persistence.NamedQuery;
 import javax.persistence.Table;
 
 @Entity
+@NamedQuery(name = "ObterFilmesComNotaMenorQue", query = "select f from Filme f where f.nota < :nota")
 @Table(name = "tbfilme")
 public class Filme {
 

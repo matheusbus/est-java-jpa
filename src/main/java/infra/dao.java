@@ -88,6 +88,11 @@ public class DAO<E> {
 		return query.getResultList();
 	}
 	
+	public E consultarUm(String nomeDaConsulta, Object... params) {
+		List<E> lista = consultar(nomeDaConsulta, params);
+		return lista.isEmpty() ? null : lista.get(0);
+	}
+	
 	public void fechar() {
 		em.close();
 	}
