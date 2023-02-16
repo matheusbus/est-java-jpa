@@ -1286,3 +1286,235 @@ public class ObterMediaFilmes {
 	
 }
 ```
+# 8 - Embeddable
+
+---
+
+O @Embeddable é utilizado para anotar classes que fazem parte de uma composição no java, na qual essas não são entidades do banco de dados, mas terão atributos que serão persistidos na tabela da entidade que possui como atributo a classe marcada com o Embeddable.
+
+Abaixo um exemplo, onde temos a classe Fornecedor, Funcionario e Endereco:
+
+<aside>
+💡 **Endereco** é uma classe que possui logradouro e complemento, esta classe não será uma entidade do banco de dados, mas seus atributos serão persistidos.
+
+</aside>
+
+<aside>
+💡 **Fornecedor** é uma classe que possui um atributo do tipo **endereco** e é mapeada para o banco de dados.
+
+</aside>
+
+<aside>
+💡 **Funcionario** é uma classe que possui um atributo do tipo **endereco** e é mapeada para o banco de dados.
+
+</aside>
+
+Clase Endereco:
+
+```java
+@Embeddable
+public class Endereco {
+
+	private String logradouro;
+	private String complemento;
+	
+	public Endereco() {
+		super();
+	}
+```
+
+Classe Funcionario:
+
+```java
+@Entity
+@Table(name = "tb_funcionario")
+public class Funcionario {
+
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	private Long id;
+	
+	private String nome;
+	
+	private Endereco endereco;
+
+	public Funcionario() {
+		super();
+		// TODO Auto-generated constructor stub
+	}
+```
+
+Classe Fornecedor:
+
+```java
+@Entity
+@Table(name = "tb_fornecedor")
+public class Fornecedor {
+
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	private Long id;
+	
+	private String nome;
+	
+	private Endereco endereco;
+
+	public Fornecedor() {
+		super();
+	}
+```
+
+Inserindo no banco de dados:
+
+```java
+public class NovoFuncFornEndereco {
+
+	public static void main(String[] args) {
+		
+		
+		DAO<Object> dao = new DAO<>();
+		
+		Endereco end1 = new Endereco("Rua", "Em frente ao supermercado");
+		Endereco end2 = new Endereco("Morro", "morro da cruz");
+		
+		Funcionario func = new Funcionario("Matheus", end1);
+		Fornecedor forn = new Fornecedor("Santa Cruz Bebidas", end2);
+		
+		dao.abrirTransacao()
+			.incluir(func)
+			.incluir(forn)
+			.commitTransacao()
+			.fechar();
+		
+	}
+	
+}
+```
+
+Ao inserir, o banco ficará da seguinte forma:
+
+![1](https://user-images.githubusercontent.com/73143728/219230915-12b75399-d10e-4692-b22a-aedcc7d1e8bd.png)
+
+![2](https://user-images.githubusercontent.com/73143728/219230983-1a69a504-5c15-4176-940a-c88cf5a2c51e.png)
+
+Percebe-se que não foi criada uma entidade para endereço, e sim, foi adicionado em colunas (os atributos da classe Endereço) nas entidades **fornecedor** e **funcionario**.
+
+---
+
+# 9 - Herança
+
+---
+
+Deve ser adicionado em nossas classes a annotation:
+
+- **@Inheritance:** para representar uma herança.
+
+Para utilizar herança com JPA, há três diferentes estratégias que podem ser adotadas e devem ser passadas como **stragety** da annotation **inheritance**:
+
+- strategy = ingheritanceType.***JOINED:*** Irá ser mapeado para o banco de dados uma tabela para cada herança, através de PFK, por exemplo:
+    - No exemplo de Aluno e Aluno Bolsista, terei uma tabela para Aluno e uma tabela para AlunoBolsista, que irá carregar a PK de Aluno como PFK e terá apenas o atributo da classe AlunoBolsista em sua entidade.
+- strategy = inheritanceType.***SINGLE_TABLE***: Irá ser mapeado para o banco de dados uma única tabela contendo os atributos de todas as classes da herança, utilizando do mesmo exemplo:
+    - Criará uma tabela única para Aluno, que conterá os atributos da classe Aluno e os atributos da classe AlunoBolsista.
+- strategy = inheritanceType.***TABLE_PER_CLASS***: Irá ser mapeado para o banco de dados uma tabela para cada classe da herança:
+    - Criará uma tabela para Aluno contendo os atributos de Aluno e criará uma tabela para AlunoBolsista contendo os atributos de Aluno e AlunoBolsista. Uma estratégia que talvez não seja tão interessante adotar, já que fere uma
+    
+    ---
+    
+
+## 8.1 - Herança com a estratégia ***JOINED***:
+
+```java
+@Entity
+@Inheritance(strategy = InheritanceType.JOINED)
+public class Aluno {
+
+	@Id
+	private Long matricula;
+	
+	private String nome;
+
+	public Aluno() {
+		super();
+		// TODO Auto-generated constructor stub
+	}
+
+@Entity
+public class AlunoBolsista extends Aluno {
+
+	// O Id vai ser detectado pelo JPA através da herança
+	
+	private double valorBolsa;
+
+	public AlunoBolsista() {
+		
+	}
+```
+Tabelas geradas:
+
+![3](https://user-images.githubusercontent.com/73143728/219231126-f3e08c6d-9faf-4e1c-b2f3-7eef7daaaa2c.png)
+
+![4](https://user-images.githubusercontent.com/73143728/219231139-e562405b-e027-4bed-b14e-7c0eab9eb582.png)
+
+---
+
+## 8.2 - Herança com a estragétia ***SINGLE_TABLE***:
+
+Quando utilizo o SINGLE_TABLE preciso especificar um discriminador para diferenciar a qual classe ou tipo pertence cada instância na minha tabela do banco de dados:
+
+Para isso, utiliza-se:
+
+- @DiscriminatorColumn: Para mapear a coluna que vai diferenciar a que tipo de instância pertence determinado registro.
+- @DiscriminatorValue: mapeado em cada classe da herança para dizer o valor que será inserido na tabela quando um objeto do tipo da classe for inserido no banco
+
+```java
+@Entity
+@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
+@DiscriminatorColumn(name = "tipo", length = 2, discriminatorType = DiscriminatorType.STRING)
+@DiscriminatorValue("AL")
+public class Aluno {
+
+	@Id
+	private Long matricula;
+	
+	private String nome;
+
+	public Aluno() {
+		super();
+		// TODO Auto-generated constructor stub
+	}
+
+	public Aluno(Long matricula, String nome) {
+		super();
+		this.matricula = matricula;
+		this.nome = nome;
+	}
+
+------------------------------------------------------------
+
+@Entity
+@DiscriminatorValue("AB")
+public class AlunoBolsista extends Aluno {
+
+	// O Id vai ser detectado pelo JPA através da herança
+	
+	private double valorBolsa;
+
+	public AlunoBolsista() {
+		
+	}
+
+	public AlunoBolsista(Long matricula, String nome, double valorBolsa) {
+		super(matricula, nome);
+		this.valorBolsa = valorBolsa;
+	}
+```
+
+Ao inserir no banco de dados:
+
+![5](https://user-images.githubusercontent.com/73143728/219231227-3176b380-385b-4c42-b5e2-f47ce338e6b3.png)
+
+---
+
+## 8.3 - Herança com a estragétia ***TABLE_PER_CLASS***:
+
+Utilizado para criar cada entidade com todos os campos da herança (duplica campos no banco de dados).
